@@ -422,18 +422,18 @@ def static_traffic_matrix(topology, mean, stddev, max_u=0.9,
         else:
             shortest_path = nx.all_pairs_dijkstra_path(topology,
                                                        weight='weight')
-        for u, v in topology.edges_iter():
-            topology.edge[u][v]['load'] = 0.0
+        for u, v in topology.edges():
+            topology.adj[u][v]['load'] = 0.0
         # Find max u
         for o, d in od_pairs:
             path = shortest_path[o][d]
             if len(path) > 1:
                 for u, v in zip(path[:-1], path[1:]):
-                    topology.edge[u][v]['load'] += assignments[(o, d)]
+                    topology.adj[u][v]['load'] += assignments[(o, d)]
         # Calculate scaling
-        current_max_u = max((float(topology.edge[u][v]['load']) \
-                             / float(topology.edge[u][v]['capacity'])
-                             for u, v in topology.edges_iter()))
+        current_max_u = max((float(topology.adj[u][v]['load']) \
+                             / float(topology.adj[u][v]['capacity'])
+                             for u, v in topology.edges()))
         norm_factor = max_u / current_max_u
         for od_pair in assignments:
             assignments[od_pair] *= norm_factor
@@ -843,7 +843,7 @@ def __nfur_func(topology, edges, betweenness):
     nfur = betweenness.copy()
     topology = topology.copy()
     for u, v in edges:
-        edge_attr = topology.edge[u][v]
+        edge_attr = topology.adj[u][v]
         topology.remove_edge(u, v)
         betw = nx.betweenness_centrality(topology, normalized=False,
                                          weight='weight')
@@ -905,8 +905,8 @@ def validate_traffic_matrix(topology, traffic_matrix, validate_load=False):
         if not all(((o, d) in od_pairs_topology for o, d in od_pairs_tm)):
             return False
         if validate_load:
-            for u, v in topology.edges_iter():
-                topology.edge[u][v]['load'] = 0
+            for u, v in topology.edges():
+                topology.adj[u][v]['load'] = 0
             capacity_unit = capacity_units[topology.graph['capacity_unit']]
             volume_unit = capacity_units[matrix.attrib['volume_unit']]
             norm_factor = float(volume_unit) / float(capacity_unit)
@@ -915,10 +915,10 @@ def validate_traffic_matrix(topology, traffic_matrix, validate_load=False):
                 if len(path) <= 1:
                     continue
                 for u, v in zip(path[:-1], path[1:]):
-                    topology.edge[u][v]['load'] += matrix.flow[o][d]
-            max_u = max((norm_factor * float(topology.edge[u][v]['load']) \
-                         / float(topology.edge[u][v]['capacity'])
-                         for u, v in topology.edges_iter()))
+                    topology.adj[u][v]['load'] += matrix.flow[o][d]
+            max_u = max((norm_factor * float(topology.adj[u][v]['load']) \
+                         / float(topology.adj[u][v]['capacity'])
+                         for u, v in topology.edges()))
             if max_u > 1.0: return False
     return True
 
@@ -977,8 +977,8 @@ def link_loads(topology, traffic_matrix, routing_matrix=None, ecmp=False):
     norm_factor = float(volume_unit) / float(capacity_unit)
     if routing_matrix == None:
         routing_matrix = nx.all_pairs_dijkstra_path(topology, weight='weight')
-    for u, v in topology.edges_iter():
-        topology.edge[u][v]['load'] = 0
+    for u, v in topology.edges():
+        topology.adj[u][v]['load'] = 0
     od_pairs = traffic_matrix.od_pairs()
 
     def process_path(path, number_of_paths=1):
@@ -986,9 +986,9 @@ def link_loads(topology, traffic_matrix, routing_matrix=None, ecmp=False):
             return
         for u, v in zip(path[:-1], path[1:]):
             if not ecmp:
-                topology.edge[u][v]['load'] += traffic_matrix.flow[o][d]
+                topology.adj[u][v]['load'] += traffic_matrix.flow[o][d]
             else:
-                topology.edge[u][v]['load'] += \
+                topology.adj[u][v]['load'] += \
                             traffic_matrix.flow[o][d] / float(number_of_paths)
 
     for o, d in od_pairs:
@@ -1003,9 +1003,9 @@ def link_loads(topology, traffic_matrix, routing_matrix=None, ecmp=False):
             for p in path:
                 process_path(p, len(path))
 
-    return {(u, v): norm_factor * float(topology.edge[u][v]['load']) \
-            / float(topology.edge[u][v]['capacity'])
-            for u, v in topology.edges_iter()}
+    return {(u, v): norm_factor * float(topology.adj[u][v]['load']) \
+            / float(topology.adj[u][v]['capacity'])
+            for u, v in topology.edges()}
 
 
 def read_traffic_matrix(path, encoding='utf-8'):
