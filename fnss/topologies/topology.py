@@ -272,7 +272,7 @@ class DirectedTopology(nx.DiGraph, BaseTopology):
         **kwargs : keyword arguments, optional
             Attributes to add to graph as key=value pairs.
         """
-        super(DirectedTopology, self).__init__(data=data, name=name, **kwargs)
+        super(DirectedTopology, self).__init__(data, name=name, **kwargs)
 
     def copy(self):
         """Return a copy of the topology.

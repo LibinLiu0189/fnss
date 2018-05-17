@@ -420,8 +420,8 @@ def static_traffic_matrix(topology, mean, stddev, max_u=0.9,
                 if o != d and d not in shortest_path[o]:
                     od_pairs.remove((o, d))
         else:
-            shortest_path = nx.all_pairs_dijkstra_path(topology,
-                                                       weight='weight')
+            shortest_path = dict(nx.all_pairs_dijkstra_path(topology,
+                                                            weight='weight'))
         for u, v in topology.edges():
             topology.adj[u][v]['load'] = 0.0
         # Find max u
@@ -551,8 +551,8 @@ def stationary_traffic_matrix(topology, mean, stddev, gamma, log_psi, n,
                                                           weight='weight'))
                     for node in origin_nodes)
         else:
-            shortest_path = nx.all_pairs_dijkstra_path(topology,
-                                                       weight='weight')
+            shortest_path = dict(nx.all_pairs_dijkstra_path(topology,
+                                                            weight='weight'))
         current_max_u = max((max(link_loads(topology,
                                             tm_sequence.get(i),
                                             shortest_path
@@ -691,8 +691,8 @@ def sin_cyclostationary_traffic_matrix(topology, mean, stddev, gamma, log_psi,
                                                           weight='weight'))
                     for node in origin_nodes)
         else:
-            shortest_path = nx.all_pairs_dijkstra_path(topology,
-                                                       weight='weight')
+            shortest_path = dict(nx.all_pairs_dijkstra_path(topology,
+                                                            weight='weight'))
         current_max_u = max((max(link_loads(topology,
                                             tm_sequence.get(i),
                                             shortest_path
@@ -850,7 +850,7 @@ def __nfur_func(topology, edges, betweenness):
         for node in betw.keys():
             if betw[node] > nfur[node]:
                 nfur[node] = betw[node]
-        topology.add_edge(u, v, edge_attr)
+        topology.add_edge(u, v, **edge_attr)
     return nfur
 
 
@@ -898,7 +898,8 @@ def validate_traffic_matrix(topology, traffic_matrix, validate_load=False):
 
     od_pairs_topology = od_pairs_from_topology(topology)
     if validate_load:
-        shortest_path = nx.all_pairs_dijkstra_path(topology, weight='weight')
+        shortest_path = dict(nx.all_pairs_dijkstra_path(topology,
+                                                        weight='weight'))
     for matrix in matrices:
         od_pairs_tm = matrix.od_pairs()
         # verify that OD pairs in TM are equal or subset of topology
@@ -976,7 +977,8 @@ def link_loads(topology, traffic_matrix, routing_matrix=None, ecmp=False):
     volume_unit = capacity_units[traffic_matrix.attrib['volume_unit']]
     norm_factor = float(volume_unit) / float(capacity_unit)
     if routing_matrix == None:
-        routing_matrix = nx.all_pairs_dijkstra_path(topology, weight='weight')
+        routing_matrix = dict(nx.all_pairs_dijkstra_path(topology,
+                                                         weight='weight'))
     for u, v in topology.edges():
         topology.adj[u][v]['load'] = 0
     od_pairs = traffic_matrix.od_pairs()
